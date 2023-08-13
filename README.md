@@ -1,5 +1,167 @@
 # undecorated-di
 
+Type-safe, straightforward dependency injection for object-oriented programming using E6 classes and TypeScript interfaces/abstract classes/types--without annotations or reflect metadata.
+
+## Installation
+
+```
+npm i -D undecorated-di
+```
+
+## Use
+
+Define interfaces for your services.
+
+```
+//flyable.interface.ts
+
+export interface Flyable {
+  fly() : void;
+}
+
+export const FlyableKey = 'Flyable';
+
+export type FlyableKeyType = typeof FlyableKey;
+
+```
+
+```
+//logger.interface.ts
+
+export interface Logger {
+  log(message : any) : void;
+}
+
+export const LoggerKey = 'Logger';
+
+export type LoggerKeyType = typeof LoggerKey;
+
+```
+
+Import these interfaces and implement them.
+
+```
+//bird.ts
+
+import { autowire } from 'undecorated-di';
+import { FlyableKey, type Flyable, type FlyableKeyType } from './flyable.interface';
+import { LoggerKey, type Logger } from './logger.interface';
+
+class Bird implements Flyable {
+  constructor(private logger : Logger) {}
+
+  fly() {
+    this.logger.log('The bird flaps its wings and soars into the air.');
+  }
+}
+
+export default autowire<FlyableKeyType, Flyable, Bird>(Bird, FlyableKey, [LoggerKey]);
+
+```
+```
+//plane.ts
+
+import { autowire } from 'undecorated-di';
+import { FlyableKey, type Flyable, type FlyableKeyType } from './flyable.interface';
+import { LoggerKey, type Logger } from './logger.interface';
+
+class Plane implements Flyable {
+  constructor(private logger : Logger) {}
+
+  fly() {
+    this.logger.log('The pilot starts the engine, the propeller begins to spin, and the plane takes off.');
+  }
+}
+
+export default autowire<FlyableKeyType, Flyable, Plane>(Plane, FlyableKey, [LoggerKey]);
+
+```
+```
+//console-logger.ts
+
+import { autowire } from 'undecorated-di';
+import { LoggerKey, type Logger, type LoggerKeyType } from './logger.interface';
+
+class ConsoleLogger implements Logger {
+  log(message : any) {
+    console.log(message);
+  }
+}
+
+export default autowire<LoggerKeyType, Logger, ConsoleLogger>(ConsoleLogger, LoggerKey);
+
+```
+
+Register these classes to containers
+
+```
+//container-a.ts
+
+import { ContainerBuilder } from 'undecorated-di';
+import BirdService from './bird.ts';
+import ConsoleLoggerService from './console-logger.ts';
+
+const containerA = ContainerBuilder
+  .createContainerBuilder()
+  .registerTransientService(BirdService) //order does not matter, even if there are dependencies
+  .registerTransientService(ConsoleLogger)
+  .build();
+
+export { containerA }; 
+
+```
+Another container. You can create as many as you need. Likely you will need one for src and one for testing.
+
+```
+//container-b.ts
+
+import { ContainerBuilder } from 'undecorated-di';
+import PlaneService from './plane.ts';
+import ConsoleLoggerService from './console-logger.ts';
+
+/* Here, we register services as singletons. Only one instance of a singleton service is created, per container,
+   even if it was first accessed indirectly by a dependent class.
+*/
+
+const containerB = ContainerBuilder
+  .createContainerBuilder()
+  .registerSingletonService(Plane) 
+  .registerSingletonService(ConsoleLoggerService)
+  .build();
+
+export { containerB };
+
+```
+Import these containers and you will have access to the services you have registered. 
+
+```
+//project-entry-point.ts
+
+import { containerA } from './container-a.ts';
+
+const iFly = containerA.services.Flyable; // returns a new instance of the class registered as Flyable
+
+//iFly will be of type Flyable, but will call the concrete methods of its implementing class
+
+iFly.fly(); //logs 'The bird flaps its wings and soars into the air.'
+
+```
+```
+//some-test.test.ts
+
+import { describe, test, expect } from 'vitest'; //or your testing library of choice, vitest is not installed with undecorated-di
+import { containerB } from './container-b.ts';
+
+const iFly = containerB.services.Flyable; //in containerB, Plane was registered to Flyable
+iFly.fly(); //logs 'The pilot starts the engine, the propeller begins to spin, and the plane takes off.'
+
+
+```
+
+Dependencies are resolve when an instance is retrieved from the services property. If a dependency is missing, an error will be thrown. Likewise, if a circular dependency exists (class A requires an instance of class C, class B requires an instance of class A, class C requires an instance of class B), an error will be thrown.
+
+# API
+
 ## Functions
 
 ### autowire
@@ -18,7 +180,7 @@
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `service` | `Constructor`<`Implementation`\> | The concrete class implmenting the generic type parameter Interface. |
+| `service` | `Constructor`<`Implementation`\> | The concrete class implementing the generic type parameter Interface. |
 | `identifier` | `K` | A string literal used to uniquely identify the class. Must be of type K. |
 | `dependencies?` | `string`[] | An array of string literals used to retrieve the dependencies of the class when the container instantiates it. |
 

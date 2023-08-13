@@ -5,7 +5,7 @@ import type { Constructor } from "./constructor.type";
  * @typeParam K - a unique key used to retrieve the autowired class. This should be the type of a string literal.
  * @typeParam Interface - the interface / abstract class / class that you would like the returned instance to be typed as.
  * @typeParam Implementation - the type of the concrete class of the service. Must extend Interface.
- * @param service - The concrete class implmenting the generic type parameter Interface.
+ * @param service - The concrete class implementing the generic type parameter Interface.
  * @param identifier - A string literal used to uniquely identify the class. Must be of type K.
  * @param dependencies - An array of string literals used to retrieve the dependencies of the class when the container instantiates it.
  * @returns { [K] : Service<Interface, Implementation> }
