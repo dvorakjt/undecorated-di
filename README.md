@@ -58,6 +58,16 @@ class Bird implements Flyable {
 export default autowire<FlyableKeyType, Flyable, Bird>(Bird, FlyableKey, [LoggerKey]);
 
 ```
+
+Autowire is a generic function. The first generic type parameter is the type of the key you wish to associate the service class to. Here we are using 
+the string literal 'Flyable' exported as FlyableKeyType from flyable.interface.ts. The second generic type parameter is the interface you wish the class
+to be exposed as when it is retrieved from the container. This can be anything as long as the implementing class extends it. The third generic type parameter 
+is the type of the class that you are registering as a service, or in other words, the class that implements the interface. 
+
+The function takes 2-3 parameters. The first parameter is the class you wish to autowire. The second is the actual key you wish to register the class to. This should
+be the same type as the first generic type parameter. The third parameter, which is optional, is a dependency array. Here, specify the keys of your dependencies.
+Order matters here! You must specify them in the order that the constructor of the autowired class expects to receive them.
+
 ```
 //plane.ts
 
