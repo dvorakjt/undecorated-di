@@ -1,37 +1,92 @@
 import { CircularDependencyError } from "./circular-dependency-error";
-import { IService } from "./i-service.interface";
 import { MissingDependencyError } from "./missing-dependency-error";
+import type { IService } from "./i-service.interface";
 
 export class Container<ServicesDictionaryType, SingletonInstancesDictionary> {
-  services : ServicesDictionaryType;
-  singletonInstances : SingletonInstancesDictionary;
+  private serviceTemplates: ServicesDictionaryType;
+  private singletonInstances: SingletonInstancesDictionary;
+  services: {
+    [K in keyof ServicesDictionaryType]: ServicesDictionaryType[K] extends IService
+      ? ReturnType<ServicesDictionaryType[K]["getInstance"]>
+      : never;
+  };
 
-  constructor(services : ServicesDictionaryType, singletonInstances) {
-    this.services = services;
+  constructor(
+    serviceTemplates: ServicesDictionaryType,
+    singletonInstances: SingletonInstancesDictionary,
+  ) {
+    this.serviceTemplates = serviceTemplates;
     this.singletonInstances = singletonInstances;
+    const self = this;
+    this.services = new Proxy(
+      {} as {
+        [K in keyof ServicesDictionaryType]: ServicesDictionaryType[K] extends IService
+          ? ReturnType<ServicesDictionaryType[K]["getInstance"]>
+          : never;
+      },
+      {
+        get(target, prop) {
+          return self.getService(prop as keyof ServicesDictionaryType);
+        },
+      },
+    );
   }
 
-  public getService<K extends keyof this['services']>(serviceKey : K) : typeof this['services'][K] extends IService ? ReturnType<this['services'][K]['getInstance']> : never {
+  private getService<K extends keyof ServicesDictionaryType>(
+    serviceKey: K,
+  ): ServicesDictionaryType[K] extends IService
+    ? ReturnType<ServicesDictionaryType[K]["getInstance"]>
+    : never {
     return this.getServiceWithAncestralDependencies(serviceKey, new Set<K>());
   }
 
-  private getServiceWithAncestralDependencies<K extends keyof this['services']>(serviceKey : K, ancestralDependencies : Set<K>) : typeof this['services'][K] extends IService ? ReturnType<this['services'][K]['getInstance']> : never {
-    const possibleSingletonInstance = this.singletonInstances[serviceKey as keyof typeof this['singletonInstances']];
-    if(possibleSingletonInstance) return possibleSingletonInstance as typeof this['services'][K] extends IService ? ReturnType<this['services'][K]['getInstance']> : never
-    
-    if(ancestralDependencies.has(serviceKey)) throw new CircularDependencyError(`${serviceKey.toString()} found in inherited dependencies of ${serviceKey.toString()}. This indicates a circular dependency.`);
+  private getServiceWithAncestralDependencies<
+    K extends keyof ServicesDictionaryType,
+  >(
+    serviceKey: K,
+    ancestralDependencies: Set<K>,
+  ): ServicesDictionaryType[K] extends IService
+    ? ReturnType<ServicesDictionaryType[K]["getInstance"]>
+    : never {
+    const possibleSingletonInstance =
+      this.singletonInstances[
+        serviceKey as unknown as keyof SingletonInstancesDictionary
+      ];
+    if (possibleSingletonInstance)
+      return possibleSingletonInstance as ServicesDictionaryType[K] extends IService
+        ? ReturnType<ServicesDictionaryType[K]["getInstance"]>
+        : never;
 
-    const service = this.services[serviceKey];
-    if(!service) throw new MissingDependencyError(`Service with key ${serviceKey.toString()} not found.`);
+    if (ancestralDependencies.has(serviceKey))
+      throw new CircularDependencyError(
+        `${serviceKey.toString()} found in inherited dependencies of ${serviceKey.toString()}. This indicates a circular dependency which cannot be resolved.`,
+      );
+
+    const service = this.serviceTemplates[serviceKey];
+    if (!service)
+      throw new MissingDependencyError(
+        `Service with key ${serviceKey.toString()} not found.`,
+      );
 
     ancestralDependencies.add(serviceKey);
-    const resolvedDependencies = (service as any).dependencies.map(dependency => {
-      return this.getServiceWithAncestralDependencies(dependency, ancestralDependencies);
-    });
-    const instance = (service as typeof this['services'][K] extends IService ? typeof this['services'][K] : never).getInstance(resolvedDependencies);
+    const resolvedDependencies = (service as any).dependencies.map(
+      (dependency) => {
+        return this.getServiceWithAncestralDependencies(
+          dependency,
+          ancestralDependencies,
+        );
+      },
+    );
+    const instance = (
+      service as ServicesDictionaryType[K] extends IService
+        ? ServicesDictionaryType[K]
+        : never
+    ).getInstance(resolvedDependencies);
 
-    if(serviceKey in (this.singletonInstances as object)) {
-      this.singletonInstances[serviceKey as keyof typeof this['singletonInstances']] = instance;
+    if (serviceKey in (this.singletonInstances as object)) {
+      this.singletonInstances[
+        serviceKey as unknown as keyof SingletonInstancesDictionary
+      ] = instance;
     }
 
     return instance;

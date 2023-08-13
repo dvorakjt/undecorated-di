@@ -1,7 +1,7 @@
 export class CircularDependencyError extends Error {
-  name = 'CircularDependencyError';
+  name = "CircularDependencyError";
 
-  constructor(message? : string) {
+  constructor(message?: string) {
     super(message);
   }
 }

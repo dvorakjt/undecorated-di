@@ -1,7 +1,7 @@
 export class MissingDependencyError extends Error {
-  name = 'MissingDependencyError'; 
+  name = "MissingDependencyError";
 
-  constructor(message? : string) {
+  constructor(message?: string) {
     super(message);
   }
 }
