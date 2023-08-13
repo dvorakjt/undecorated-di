@@ -72,7 +72,7 @@ export class ContainerBuilder<
   }
 
   /**
-   * Once all of the necessary services have been registered, call this method to build a
+   * Once all of the necessary services have been registered, call this method to build a Container.
    * @returns Container
    */
   build() {

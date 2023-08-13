@@ -108,13 +108,13 @@ Register these classes to containers
 //container-a.ts
 
 import { ContainerBuilder } from 'undecorated-di';
-import BirdService from './bird.ts';
-import ConsoleLoggerService from './console-logger.ts';
+import BirdService from './bird';
+import ConsoleLoggerService from './console-logger';
 
 const containerA = ContainerBuilder
   .createContainerBuilder()
   .registerTransientService(BirdService) //order does not matter, even if there are dependencies
-  .registerTransientService(ConsoleLogger)
+  .registerTransientService(ConsoleLoggerService)
   .build();
 
 export { containerA }; 
@@ -126,16 +126,17 @@ Another container. You can create as many as you need. Likely you will need one 
 //container-b.ts
 
 import { ContainerBuilder } from 'undecorated-di';
-import PlaneService from './plane.ts';
-import ConsoleLoggerService from './console-logger.ts';
+import PlaneService from './plane';
+import ConsoleLoggerService from './console-logger';
 
-/* Here, we register services as singletons. Only one instance of a singleton service is created, per container,
-   even if it was first accessed indirectly by a dependent class.
+/* 
+  Here, we register services as singletons. Only one instance of a singleton service is created per 
+  container, even if it was first accessed indirectly by a dependent class.
 */
 
 const containerB = ContainerBuilder
   .createContainerBuilder()
-  .registerSingletonService(Plane) 
+  .registerSingletonService(PlaneService) 
   .registerSingletonService(ConsoleLoggerService)
   .build();
 
@@ -145,9 +146,9 @@ export { containerB };
 Import these containers and you will have access to the services you have registered. 
 
 ```
-//project-entry-point.ts
+//some file, e.g. index.ts
 
-import { containerA } from './container-a.ts';
+import { containerA } from './container-a';
 
 const iFly = containerA.services.Flyable; // returns a new instance of the class registered as Flyable
 
@@ -157,10 +158,8 @@ iFly.fly(); //logs 'The bird flaps its wings and soars into the air.'
 
 ```
 ```
-//some-test.test.ts
-
-import { describe, test, expect } from 'vitest'; //or your testing library of choice, vitest is not installed with undecorated-di
-import { containerB } from './container-b.ts';
+//another file, perhaps a test
+import { containerB } from './container-b';
 
 const iFly = containerB.services.Flyable; //in containerB, Plane was registered to Flyable
 iFly.fly(); //logs 'The pilot starts the engine, the propeller begins to spin, and the plane takes off.'
@@ -168,17 +167,34 @@ iFly.fly(); //logs 'The pilot starts the engine, the propeller begins to spin, a
 
 ```
 
-Dependencies are resolve when an instance is retrieved from the services property. If a dependency is missing, an error will be thrown. Likewise, if a circular dependency exists (class A requires an instance of class C, class B requires an instance of class A, class C requires an instance of class B), an error will be thrown.
+Dependencies are resolved when an instance is retrieved from the services property. If a dependency is missing, an error will be thrown. Likewise, if a circular dependency exists (class A requires an instance of class C, class B requires an instance of class A, class C requires an instance of class B), an error will be thrown.
 
-# API
+## tsconfig
 
-## Functions
+Several classes in the project have private members. Therefore, you must set the target option in your tsconfig to "ES2015" or higher.
 
-### autowire
+```
+//tsconfig.json
+{
+  "compilerOptions": {
+    "target": "ES2015",
+  }
+}
+```
+
+## Example
+
+You can view a simple example project [here](https://github.com/dvorakjt/undecorated-di-sample).
+
+## API
+
+### Functions
+
+#### autowire
 
 ▸ **autowire**<`K`, `Interface`, `Implementation`\>(`service`, `identifier`, `dependencies?`): { [Key in string]: Service<Interface, Implementation\> }
 
-#### Type parameters
+##### Type parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
@@ -186,7 +202,7 @@ Dependencies are resolve when an instance is retrieved from the services propert
 | `Interface` | `Interface` | the interface / abstract class / class that you would like the returned instance to be typed as. |
 | `Implementation` | `Implementation` | the type of the concrete class of the service. Must extend Interface. |
 
-#### Parameters
+##### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
@@ -194,11 +210,11 @@ Dependencies are resolve when an instance is retrieved from the services propert
 | `identifier` | `K` | A string literal used to uniquely identify the class. Must be of type K. |
 | `dependencies?` | `string`[] | An array of string literals used to retrieve the dependencies of the class when the container instantiates it. |
 
-#### Returns
+##### Returns
 
 { [Key in string]: Service<Interface, Implementation\> }
 
-#### Example
+##### Example
 
 ```ts
   interface Flyable {
@@ -220,61 +236,61 @@ Dependencies are resolve when an instance is retrieved from the services propert
   export default FlyableService;
 ```
 
-#### Defined in
+##### Defined in
 
 [autowire.ts:33](https://github.com/dvorakjt/undecorated-di/blob/69b140c/src/autowire.ts#L33)
 
-## Classes
+### Classes
 
-### Class: ContainerBuilder<ServicesDictionaryType, SingletonInstancesDictionaryType\>
+#### Class: ContainerBuilder<ServicesDictionaryType, SingletonInstancesDictionaryType\>
 
 Used to build a dependency injection container. In service class files, call autowire() on the class, and export the returned value as default. 
 Import these exports into the file in which a container is to be declared, and then use a ContainerBuilder to construct a container.
 
-## Type parameters
+### Type parameters
 
 | Name |
 | :------ |
 | `ServicesDictionaryType` |
 | `SingletonInstancesDictionaryType` |
 
-## Constructors
+### Constructors
 
-### constructor
+#### constructor
 
 • `Private` **new ContainerBuilder**<`ServicesDictionaryType`, `SingletonInstancesDictionaryType`\>(`transientServiceDictionary`, `singletonInstancesDictionary`)
 
-#### Type parameters
+##### Type parameters
 
 | Name |
 | :------ |
 | `ServicesDictionaryType` |
 | `SingletonInstancesDictionaryType` |
 
-#### Parameters
+##### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `transientServiceDictionary` | `ServicesDictionaryType` |
 | `singletonInstancesDictionary` | `SingletonInstancesDictionaryType` |
 
-#### Defined in
+##### Defined in
 
 [container-builder.ts:24](https://github.com/dvorakjt/undecorated-di/blob/69b140c/src/container-builder.ts#L24)
 
-## Properties
+### Properties
 
-### servicesDictionary
+#### servicesDictionary
 
 • **servicesDictionary**: `ServicesDictionaryType`
 
-#### Defined in
+##### Defined in
 
 [container-builder.ts:21](https://github.com/dvorakjt/undecorated-di/blob/69b140c/src/container-builder.ts#L21)
 
 ___
 
-### singletonInstancesDictionary
+#### singletonInstancesDictionary
 
 • **singletonInstancesDictionary**: `SingletonInstancesDictionaryType`
 
@@ -282,125 +298,125 @@ ___
 
 [container-builder.ts:22](https://github.com/dvorakjt/undecorated-di/blob/69b140c/src/container-builder.ts#L22)
 
-## Methods
+### Methods
 
-### build
+#### build
 
 ▸ **build**(): `Container`<`ServicesDictionaryType`, `SingletonInstancesDictionaryType`\>
 
 Once all of the necessary services have been registered, call this method to build a Container.
 
-#### Returns
+##### Returns
 
 `Container`<`ServicesDictionaryType`, `SingletonInstancesDictionaryType`\>
 
 Container
 
-#### Defined in
+##### Defined in
 
 [container-builder.ts:78](https://github.com/dvorakjt/undecorated-di/blob/69b140c/src/container-builder.ts#L78)
 
 ___
 
-### createSingletonInstancesDictionary
+#### createSingletonInstancesDictionary
 
 ▸ `Private` **createSingletonInstancesDictionary**<`AdditionalServiceDictionary`\>(`additionalServiceDictionary`): { [K in string \| number \| symbol]: AdditionalServiceDictionary[K] extends IService ? undefined \| ReturnType<any[any]["getInstance"]\> : never }
 
-#### Type parameters
+##### Type parameters
 
 | Name |
 | :------ |
 | `AdditionalServiceDictionary` |
 
-#### Parameters
+##### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `additionalServiceDictionary` | `AdditionalServiceDictionary` |
 
-#### Returns
+##### Returns
 
 { [K in string \| number \| symbol]: AdditionalServiceDictionary[K] extends IService ? undefined \| ReturnType<any[any]["getInstance"]\> : never }
 
-#### Defined in
+##### Defined in
 
 [container-builder.ts:85](https://github.com/dvorakjt/undecorated-di/blob/69b140c/src/container-builder.ts#L85)
 
 ___
 
-### registerSingletonService
+#### registerSingletonService
 
 ▸ **registerSingletonService**<`AdditionalServiceDictionary`\>(`additionalServiceDictionary`): [`ContainerBuilder`](ContainerBuilder.md)<`ServicesDictionaryType` & `object` & `AdditionalServiceDictionary` \| `ServicesDictionaryType` & ``null`` & `AdditionalServiceDictionary`, `SingletonInstancesDictionaryType` & `object` & { [K in string \| number \| symbol]: AdditionalServiceDictionary[K] extends IService ? undefined \| ReturnType<any[any]["getInstance"]\> : never }\>
 
 Registers a service in singleton scope (the same instance will be returned each time it is accessed from the container), and returns a new ContainerBuilder.
 
-#### Type parameters
+##### Type parameters
 
 | Name |
 | :------ |
 | `AdditionalServiceDictionary` |
 
-#### Parameters
+##### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `additionalServiceDictionary` | `AdditionalServiceDictionary` | Pass in value returned by autowire. |
 
-#### Returns
+##### Returns
 
 [`ContainerBuilder`](ContainerBuilder.md)<`ServicesDictionaryType` & `object` & `AdditionalServiceDictionary` \| `ServicesDictionaryType` & ``null`` & `AdditionalServiceDictionary`, `SingletonInstancesDictionaryType` & `object` & { [K in string \| number \| symbol]: AdditionalServiceDictionary[K] extends IService ? undefined \| ReturnType<any[any]["getInstance"]\> : never }\>
 
 ContainerBuilder
 
-#### Defined in
+##### Defined in
 
 [container-builder.ts:55](https://github.com/dvorakjt/undecorated-di/blob/69b140c/src/container-builder.ts#L55)
 
 ___
 
-### registerTransientService
+#### registerTransientService
 
 ▸ **registerTransientService**<`AdditionalServiceDictionary`\>(`additionalServiceDictionary`): [`ContainerBuilder`](ContainerBuilder.md)<`ServicesDictionaryType` & `object` & `AdditionalServiceDictionary` \| `ServicesDictionaryType` & ``null`` & `AdditionalServiceDictionary`, `SingletonInstancesDictionaryType`\>
 
 Registers a service in transient scope (a new instance will be returned each time it is accessed from the container), and returns a new ContainerBuilder.
 
-#### Type parameters
+##### Type parameters
 
 | Name |
 | :------ |
 | `AdditionalServiceDictionary` |
 
-#### Parameters
+##### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `additionalServiceDictionary` | `AdditionalServiceDictionary` | Pass in value returned by autowire. |
 
-#### Returns
+##### Returns
 
 [`ContainerBuilder`](ContainerBuilder.md)<`ServicesDictionaryType` & `object` & `AdditionalServiceDictionary` \| `ServicesDictionaryType` & ``null`` & `AdditionalServiceDictionary`, `SingletonInstancesDictionaryType`\>
 
 ContainerBuilder
 
-#### Defined in
+##### Defined in
 
 [container-builder.ts:37](https://github.com/dvorakjt/undecorated-di/blob/69b140c/src/container-builder.ts#L37)
 
 ___
 
-### createContainerBuilder
+#### createContainerBuilder
 
 ▸ `Static` **createContainerBuilder**(): [`ContainerBuilder`](ContainerBuilder.md)<{}, {}\>
 
 returns a new ContainerBuilder with empty servicesDictionary and singletonInstancesDictionary. Use this to get a new ContainerBuilder.
 
-#### Returns
+##### Returns
 
 [`ContainerBuilder`](ContainerBuilder.md)<{}, {}\>
 
 ContainerBuilder<{}, {}>;
 
-#### Example
+##### Example
 
 ```ts
   interface Flyable {
@@ -426,6 +442,6 @@ ContainerBuilder<{}, {}>;
   const flyable = container.services.Flyable; //will be instance of Flyable
 ```
 
-#### Defined in
+##### Defined in
 
 [container-builder.ts:17](https://github.com/dvorakjt/undecorated-di/blob/69b140c/src/container-builder.ts#L17)
