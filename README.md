@@ -10,9 +10,9 @@
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `K` | extends `string` | a unique key used to retrieve the autowired class. This should be be the type of a string literal. |
+| `K` | extends `string` | a unique key used to retrieve the autowired class. This should be the type of a string literal. |
 | `Interface` | `Interface` | the interface / abstract class / class that you would like the returned instance to be typed as. |
-| `Implementation` | `Implementation` | the type of the concrete class of the service. |
+| `Implementation` | `Implementation` | the type of the concrete class of the service. Must extend Interface. |
 
 #### Parameters
 
