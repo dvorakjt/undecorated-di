@@ -7,7 +7,7 @@ Type-safe, straightforward dependency injection for object-oriented programming 
 ## Installation
 
 ```
-npm i -D undecorated-di
+npm i undecorated-di
 ```
 
 ## Use
