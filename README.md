@@ -2,7 +2,7 @@
 
 Type-safe, straightforward dependency injection for object-oriented programming using E6 classes and TypeScript interfaces/abstract classes/types--without annotations or reflect metadata.
 
-https://img.shields.io/badge/coverage-unknown-informational.svg?placeholder=$coverage-url$&style=flat https://img.shields.io/badge/lines-unknown-informational.svg?placeholder=$lines-url$&style=flat https://img.shields.io/badge/statements-unknown-informational.svg?placeholder=$statements-url$&style=flat https://img.shields.io/badge/functions-unknown-informational.svg?placeholder=$functions-url$&style=flat https://img.shields.io/badge/branches-unknown-informational.svg?placeholder=$branches-url$&style=flat
+![test](https://github.com/dvorakjt/undecorated-di/actions/workflows/test.yml/badge.svg) 
 
 ## Installation
 

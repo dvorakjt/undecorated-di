@@ -8,15 +8,13 @@
   "scripts": {
     "test": "vitest",
     "format": "prettier --write \"**/*.+(js|ts|json)\"",
-    "build": "tsup",
-    "badges": "monorepo-coverage-badges"
+    "build": "tsup"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@vitest/coverage-v8": "^0.34.1",
-    "monorepo-coverage-badges": "^1.0.3",
     "prettier": "^3.0.0",
     "tsup": "^7.2.0",
     "typedoc": "^0.24.8",
