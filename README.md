@@ -2,6 +2,8 @@
 
 Type-safe, straightforward dependency injection for object-oriented programming using E6 classes and TypeScript interfaces/abstract classes/types--without annotations or reflect metadata.
 
+![Statements](#statements#) ![Branches](#branches#) ![Functions](#functions#) ![Lines](#lines#)
+
 ## Installation
 
 ```
