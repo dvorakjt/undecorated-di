@@ -16,16 +16,16 @@ import type { Constructor } from "./constructor.type";
  *   }
  *   const FlyableKey = 'Flyable';
  *   type FlyableKeyType = typeof FlyableKey;
- * 
+ *
  *   class Bird implements Flyable {
  *     fly() {
  *       console.log('The bird flaps its wings and soars into the air.');
  *     }
  *   }
- *   
  *
- *   const FlyableService = autowire<FlyableKeyType, Flyable, Bird>(Bird, FlyableKey); 
- * 
+ *
+ *   const FlyableService = autowire<FlyableKeyType, Flyable, Bird>(Bird, FlyableKey);
+ *
  *   //If registered to a container, will be retrieved as type Flyable
  *   export default FlyableService;
  * ```

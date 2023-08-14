@@ -3,9 +3,9 @@ import { mergeDictionaries } from "./merge-dictionaries";
 import type { IService } from "./i-service.interface";
 
 /**
- * Used to build a dependency injection container. In service class files, call autowire() on the class, and export the returned value as default. 
- * Import these exports into the file in which a container is to be declared, and then use a ContainerBuilder to construct a container. 
-*/
+ * Used to build a dependency injection container. In service class files, call autowire() on the class, and export the returned value as default.
+ * Import these exports into the file in which a container is to be declared, and then use a ContainerBuilder to construct a container.
+ */
 export class ContainerBuilder<
   ServicesDictionaryType,
   SingletonInstancesDictionaryType,
@@ -13,7 +13,7 @@ export class ContainerBuilder<
   /**
    * returns a new ContainerBuilder with empty servicesDictionary and singletonInstancesDictionary. Use this to get a new ContainerBuilder.
    * @returns ContainerBuilder<{}, {}>;
-  */
+   */
   static createContainerBuilder() {
     return new ContainerBuilder({}, {});
   }

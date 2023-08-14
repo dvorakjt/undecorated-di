@@ -1,6 +1,6 @@
 # undecorated-di
 
-Type-safe, straightforward dependency injection for object-oriented programming using E6 classes and TypeScript interfaces/abstract classes/types--without annotations or reflect metadata.
+Type-safe, straightforward dependency injection for object-oriented programming using E6 classes and TypeScript interfaces/abstract classes/types--without annotations or reflect-metadata.
 
 ![test](https://github.com/dvorakjt/undecorated-di/actions/workflows/test.yml/badge.svg) 
 

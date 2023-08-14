@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     watch: false,
     coverage: {
-      provider: 'v8',
+      provider: "v8",
       enabled: true,
       all: true,
       100: true,
@@ -16,9 +16,7 @@ export default defineConfig({
         "**/*.interface.ts",
         "**/*.type.ts",
       ],
-      reporter: [
-        [ 'json', { file: 'coverage-summary.json'}]
-      ]
+      reporter: [["json", { file: "coverage-summary.json" }]],
     },
   },
 });
