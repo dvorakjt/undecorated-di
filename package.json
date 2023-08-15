@@ -1,6 +1,6 @@
 {
   "name": "undecorated-di",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Type-safe, straightforward dependency injection for object-oriented programming using E6 classes and TypeScript interfaces/abstract classes/types--without annotations or reflect-metadata.",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
