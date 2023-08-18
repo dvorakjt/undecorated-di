@@ -73,7 +73,7 @@ export class Container<ServicesDictionaryType, SingletonInstancesDictionary> {
       (dependency) => {
         return this.getServiceWithAncestralDependencies(
           dependency,
-          ancestralDependencies,
+          new Set(ancestralDependencies)
         );
       },
     );
