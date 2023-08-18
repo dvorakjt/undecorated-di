@@ -1,6 +1,6 @@
-import { Container } from "./container";
+import { Container, Instance, SingletonInstancesDictionary } from "./container";
 import { mergeDictionaries } from "./merge-dictionaries";
-import type { IService } from "./i-service.interface";
+import type { Instantiable } from "./get-instance.interface";
 
 /**
  * Used to build a dependency injection container. In service class files, call autowire() on the class, and export the returned value as default.
@@ -78,15 +78,15 @@ export class ContainerBuilder<
   build() {
     return new Container(
       this.servicesDictionary,
-      this.singletonInstancesDictionary,
+      this.singletonInstancesDictionary as SingletonInstancesDictionary<this['servicesDictionary']>,
     );
   }
 
   private createSingletonInstancesDictionary<AdditionalServiceDictionary>(
     additionalServiceDictionary: AdditionalServiceDictionary,
   ): {
-    [K in keyof AdditionalServiceDictionary]: AdditionalServiceDictionary[K] extends IService
-      ? ReturnType<AdditionalServiceDictionary[K]["getInstance"]> | undefined
+    [K in keyof AdditionalServiceDictionary]: AdditionalServiceDictionary[K] extends Instantiable
+      ? Instance<K, AdditionalServiceDictionary> | undefined
       : never;
   } {
     const singletonInstanceDictionary: any = {};
@@ -94,8 +94,8 @@ export class ContainerBuilder<
       singletonInstanceDictionary[key] = undefined;
     }
     return singletonInstanceDictionary as {
-      [K in keyof AdditionalServiceDictionary]: AdditionalServiceDictionary[K] extends IService
-        ? ReturnType<AdditionalServiceDictionary[K]["getInstance"]> | undefined
+      [K in keyof AdditionalServiceDictionary]: AdditionalServiceDictionary[K] extends Instantiable
+        ? Instance<K, AdditionalServiceDictionary> | undefined
         : never;
     };
   }

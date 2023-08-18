@@ -1,20 +1,26 @@
 import { CircularDependencyError } from "./circular-dependency-error";
 import { MissingDependencyError } from "./missing-dependency-error";
-import type { IService } from "./i-service.interface";
+import type { Instantiable } from "./get-instance.interface";
 import { DependencyGraphNode } from "./dependency-graph-node";
 import { SingletonPlaceholder } from "./singleton-placeholder";
+import { DependencyArrayBearer } from "./dependency-array-bearer.interface";
+import { ErrorMessages } from "./error-messages";
 
 type Instance<K extends keyof ServicesDictionary, ServicesDictionary> = 
-  ServicesDictionary[K] extends IService ? ReturnType<ServicesDictionary[K]["getInstance"]> : never;
+  ServicesDictionary[K] extends Instantiable ? ReturnType<ServicesDictionary[K]["getInstance"]> : never;
 
 type SingletonPlaceholderDictionary<ServicesDictionary> = {
   [K in keyof ServicesDictionary] : 
     Array<SingletonPlaceholder<Instance<K, ServicesDictionary>>>
 }
 
-export class Container<ServicesDictionary, SingletonInstancesDictionary> {
+type SingletonInstancesDictionary<ServicesDictionary> = {
+  [K in keyof ServicesDictionary] : Instance<K, ServicesDictionary> | undefined;
+}
+
+class Container<ServicesDictionary> {
   private serviceTemplates: ServicesDictionary;
-  private singletonInstances: SingletonInstancesDictionary;
+  private singletonInstances: SingletonInstancesDictionary<ServicesDictionary>;
   private singletonPlaceholders = {} as SingletonPlaceholderDictionary<ServicesDictionary>;
 
   services: {
@@ -23,7 +29,7 @@ export class Container<ServicesDictionary, SingletonInstancesDictionary> {
 
   constructor(
     serviceTemplates: ServicesDictionary,
-    singletonInstances: SingletonInstancesDictionary,
+    singletonInstances: SingletonInstancesDictionary<ServicesDictionary>,
   ) {
     this.serviceTemplates = serviceTemplates;
     this.singletonInstances = singletonInstances;
@@ -54,7 +60,7 @@ export class Container<ServicesDictionary, SingletonInstancesDictionary> {
   ) : Instance<K, ServicesDictionary> { 
     //if the singleton exists already, just return it
     if(node.isSingleton) {
-      const singletonInstance = this.singletonInstances[node.serviceKey as unknown as keyof SingletonInstancesDictionary];
+      const singletonInstance = this.singletonInstances[node.serviceKey];
       if(singletonInstance) return singletonInstance as Instance<K, ServicesDictionary>;
     }
 
@@ -71,13 +77,12 @@ export class Container<ServicesDictionary, SingletonInstancesDictionary> {
     //resolve dependencies
     const service = this.serviceTemplates[node.serviceKey];
     if (!service) {
-      console.log(node.serviceKey);
-
       throw new MissingDependencyError(
-        `Service with key ${node.serviceKey.toString()} not found.`,
+        node.parent ? ErrorMessages.MISSING_DEPENDENCY_ERROR_WITH_DEPENDENCY_GRAPH(node) :
+        ErrorMessages.MISSING_DEPENDENCY_ERROR(node.serviceKey)
       );
     }
-    const resolvedDependencies = (service as any).dependencies.map(
+    const resolvedDependencies = (service as unknown as DependencyArrayBearer<ServicesDictionary>).dependencies.map(
       (dependency: keyof ServicesDictionary) => {
         const childNode = new DependencyGraphNode(
           dependency,
@@ -89,15 +94,13 @@ export class Container<ServicesDictionary, SingletonInstancesDictionary> {
     );
 
     const instance = (
-      service as ServicesDictionary[K] extends IService
+      service as ServicesDictionary[K] extends Instantiable
         ? ServicesDictionary[K]
         : never
     ).getInstance(resolvedDependencies);
 
     if(node.isSingleton) {
-      this.singletonInstances[
-        node.serviceKey as unknown as keyof SingletonInstancesDictionary
-      ] = instance;
+      this.singletonInstances[node.serviceKey] = instance;
       if(node.serviceKey in this.singletonPlaceholders) {
         const placeholders = this.singletonPlaceholders[node.serviceKey] as Array<SingletonPlaceholder<Instance<typeof node['serviceKey'], ServicesDictionary>>>;
         placeholders.forEach(placeholder => {
@@ -110,12 +113,11 @@ export class Container<ServicesDictionary, SingletonInstancesDictionary> {
     return instance;
   }
 
-  private isSingleton(serviceKey : any) {
-    return serviceKey in (this.singletonInstances as object);
+  private isSingleton<K extends keyof SingletonInstancesDictionary<ServicesDictionary>>(serviceKey : K) {
+    return serviceKey in this.singletonInstances;
   }
 
-  //must also not depend on itself?
-  private completesSingletonOnlyDependencyCycle(node : DependencyGraphNode<any>) {
+  private completesSingletonOnlyDependencyCycle<K extends keyof ServicesDictionary>(node : DependencyGraphNode<K>) {
     const { serviceKey } = node;
     let containsOnlySingletons = node.isSingleton;
 
@@ -124,9 +126,7 @@ export class Container<ServicesDictionary, SingletonInstancesDictionary> {
       if(!node.isSingleton) containsOnlySingletons = false;
       if(node.serviceKey === serviceKey) {
         if(!containsOnlySingletons) {
-          throw new CircularDependencyError(
-            `${serviceKey.toString()} found in inherited dependencies of ${serviceKey.toString()}. This indicates a circular dependency which cannot be resolved.`
-          );
+          throw new CircularDependencyError(ErrorMessages.CIRCULAR_DEPENDENCY_ERROR(serviceKey));
         }
       
         return true;
@@ -136,3 +136,5 @@ export class Container<ServicesDictionary, SingletonInstancesDictionary> {
     return false;
   }
 }
+
+export { Container, type Instance, type SingletonInstancesDictionary };

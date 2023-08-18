@@ -1,7 +1,9 @@
 import { describe, test, expect } from "vitest";
-import { Container } from "../container";
+import { Container, SingletonInstancesDictionary } from "../container";
 import { autowire } from "../autowire";
 import { mergeDictionaries } from "../merge-dictionaries";
+import { ErrorMessages } from "../error-messages";
+import { DependencyGraphNode } from "../dependency-graph-node";
 
 describe("Container", () => {
   test("It returns an instance of a class when the corresponding property of services is accessed.", () => {
@@ -22,7 +24,7 @@ describe("Container", () => {
       Bird,
       IFlyableKey,
     );
-    const container = new Container(servicesTemplate, {});
+    const container = new Container(servicesTemplate, {} as SingletonInstancesDictionary<typeof servicesTemplate>);
     expect(container.services.IFlyable).toBeInstanceOf(Bird);
   });
 
@@ -56,7 +58,7 @@ describe("Container", () => {
       Counter,
       CounterKey,
     );
-    const container = new Container(servicesTemplate, {});
+    const container = new Container(servicesTemplate, {} as SingletonInstancesDictionary<typeof servicesTemplate>);
     const counter = container.services.Counter;
     counter.count++;
     const accessingCounterAgain = container.services.Counter;
@@ -87,7 +89,7 @@ describe("Container", () => {
       serviceC,
     );
 
-    const container = new Container(servicesDictionary, {});
+    const container = new Container(servicesDictionary, {} as SingletonInstancesDictionary<typeof servicesDictionary>);
 
     expect(container.services.C.b.a).toBeInstanceOf(A);
   });
@@ -120,7 +122,7 @@ describe("Container", () => {
     );
     const container = new Container(servicesDictionary, {
       Counter: undefined,
-    } as { Counter: Counter | undefined });
+    } as SingletonInstancesDictionary<typeof servicesDictionary>);
     const counterIncrementer = container.services.CounterIncrementer;
     counterIncrementer.increment();
     counterIncrementer.increment();
@@ -129,23 +131,26 @@ describe("Container", () => {
   });
 
   test("It throws an error if a dependency is missing.", () => {
-    class A {}
-    class B {
-      a: A;
-      constructor(a: A) {
-        this.a = a;
+    class A {
+      b : B;
+      constructor(b : B) {
+        this.b = b
       }
     }
-    const serviceB = autowire<"B", B, B>(B, "B", ["A"]);
+    class B {
+    }
+    const serviceA = autowire<"A", A, A>(A, "A", ["B"]);
 
-    const container = new Container(serviceB, {});
+    const container = new Container(serviceA, {} as SingletonInstancesDictionary<typeof serviceA>);
 
-    expect(() => container.services.B).toThrowError(
-      "Service with key A not found.",
-    );
+    const serviceANode = new DependencyGraphNode('A', false);
+    const serviceBNode = new DependencyGraphNode('B', false, serviceANode);
+
+    expect(() => container.services.A).toThrowError(
+      ErrorMessages.MISSING_DEPENDENCY_ERROR_WITH_DEPENDENCY_GRAPH(serviceBNode));
   });
 
-  test("It throws an error if a circular dependency exists.", () => {
+  test("It throws an error if a circular dependency exists and all classes are transient in scope.", () => {
     class A {
       c: C;
       constructor(c: C) {
@@ -173,10 +178,10 @@ describe("Container", () => {
       serviceC,
     );
 
-    const container = new Container(servicesDictionary, {});
+    const container = new Container(servicesDictionary, {} as SingletonInstancesDictionary<typeof servicesDictionary>);
 
     expect(() => container.services.A).toThrowError(
-      "A found in inherited dependencies of A. This indicates a circular dependency which cannot be resolved.",
+      ErrorMessages.CIRCULAR_DEPENDENCY_ERROR('A')
     );
   });
 });

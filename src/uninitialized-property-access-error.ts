@@ -1,4 +1,4 @@
-export class UninitializedPropertyAccessedError extends Error {
+export class UninitializedPropertyAccessError extends Error {
   name = 'UninitializedPropertyAccessed';
 
   constructor(message : any) {
