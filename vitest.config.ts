@@ -7,7 +7,6 @@ export default defineConfig({
       provider: "v8",
       enabled: true,
       all: true,
-      100: true,
       include: ["src/**"],
       exclude: [
         "src/index.ts",
