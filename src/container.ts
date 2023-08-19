@@ -5,6 +5,7 @@ import { DependencyGraphNode } from "./dependency-graph-node";
 import { SingletonPlaceholder } from "./singleton-placeholder";
 import { DependencyArrayBearer } from "./dependency-array-bearer.interface";
 import { ErrorMessages } from "./error-messages";
+import { ServiceNotFoundError } from "./service-not-found-error";
 
 type Instance<K extends keyof ServicesDictionary, ServicesDictionary> = 
   ServicesDictionary[K] extends Instantiable ? ReturnType<ServicesDictionary[K]["getInstance"]> : never;
@@ -22,6 +23,7 @@ class Container<ServicesDictionary> {
   private serviceTemplates: ServicesDictionary;
   private singletonInstances: SingletonInstancesDictionary<ServicesDictionary>;
   private singletonPlaceholders = {} as SingletonPlaceholderDictionary<ServicesDictionary>;
+  private resolvedServices = new Set<keyof ServicesDictionary>();
 
   services: {
     [K in keyof ServicesDictionary]: Instance<K, ServicesDictionary>
@@ -39,7 +41,7 @@ class Container<ServicesDictionary> {
         [K in keyof ServicesDictionary]: Instance<K, ServicesDictionary>
       },
       {
-        get(target, prop) {
+        get(_target, prop) {
           return self.getService(prop as keyof ServicesDictionary);
         },
       },
@@ -57,30 +59,30 @@ class Container<ServicesDictionary> {
 
   private getServiceWithDependencyGraph<K extends keyof ServicesDictionary>(
     node : DependencyGraphNode<K>
-  ) : Instance<K, ServicesDictionary> { 
-    //if the singleton exists already, just return it
+  ) : Instance<K, ServicesDictionary> {
     if(node.isSingleton) {
       const singletonInstance = this.singletonInstances[node.serviceKey];
       if(singletonInstance) return singletonInstance as Instance<K, ServicesDictionary>;
     }
 
-    //check for circular dependencies, return a proxy if the node completes a singleton dependency cycle
-    if(this.completesSingletonOnlyDependencyCycle(node)) {
+    if(!this.wasPreviouslyResolved(node.serviceKey) && this.completesSingletonOnlyDependencyCycle(node)) {
       if(!(node.serviceKey in this.singletonPlaceholders)) {
-        this.singletonPlaceholders[node.serviceKey] = []
+        this.singletonPlaceholders[node.serviceKey] = [];
       }
       const placeholder = new SingletonPlaceholder<Instance<typeof node['serviceKey'], ServicesDictionary>>()
       this.singletonPlaceholders[node.serviceKey].push(placeholder);
       return placeholder.proxy;
     }
 
-    //resolve dependencies
     const service = this.serviceTemplates[node.serviceKey];
     if (!service) {
-      throw new MissingDependencyError(
-        node.parent ? ErrorMessages.MISSING_DEPENDENCY_ERROR_WITH_DEPENDENCY_GRAPH(node) :
-        ErrorMessages.MISSING_DEPENDENCY_ERROR(node.serviceKey)
-      );
+      if(node.parent) {
+        throw new MissingDependencyError(
+          ErrorMessages.MISSING_DEPENDENCY_ERROR_WITH_DEPENDENCY_GRAPH(node)
+        );
+      } else {
+        throw new ServiceNotFoundError(ErrorMessages.SERVICE_NOT_FOUND(node.serviceKey));
+      }
     }
     const resolvedDependencies = (service as unknown as DependencyArrayBearer<ServicesDictionary>).dependencies.map(
       (dependency: keyof ServicesDictionary) => {
@@ -110,11 +112,17 @@ class Container<ServicesDictionary> {
       }
     }
 
+    this.flagAsResolved(node.serviceKey);
+
     return instance;
   }
 
   private isSingleton<K extends keyof SingletonInstancesDictionary<ServicesDictionary>>(serviceKey : K) {
     return serviceKey in this.singletonInstances;
+  }
+
+  private wasPreviouslyResolved<K extends keyof ServicesDictionary>(serviceKey : K) {
+    return this.resolvedServices.has(serviceKey);
   }
 
   private completesSingletonOnlyDependencyCycle<K extends keyof ServicesDictionary>(node : DependencyGraphNode<K>) {
@@ -134,6 +142,10 @@ class Container<ServicesDictionary> {
     }
 
     return false;
+  }
+
+  private flagAsResolved<K extends keyof ServicesDictionary>(serviceKey : K) {
+    this.resolvedServices.add(serviceKey);
   }
 }
 

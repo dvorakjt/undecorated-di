@@ -4,6 +4,7 @@ import { autowire } from "../autowire";
 import { mergeDictionaries } from "../merge-dictionaries";
 import { ErrorMessages } from "../error-messages";
 import { DependencyGraphNode } from "../dependency-graph-node";
+import { UninitializedPropertyAccessError } from "../uninitialized-property-access-error";
 
 describe("Container", () => {
   test("It returns an instance of a class when the corresponding property of services is accessed.", () => {
@@ -130,6 +131,13 @@ describe("Container", () => {
     expect(container.services.Counter.count).toBe(3);
   });
 
+  test("It throws an error if a requested service is missing.", () => {
+    const emptyContainer = new Container({}, {});
+    expect(() => (emptyContainer.services as any).NON_EXISTENT).toThrowError(
+      ErrorMessages.SERVICE_NOT_FOUND('NON_EXISTENT')
+    );
+  });
+
   test("It throws an error if a dependency is missing.", () => {
     class A {
       b : B;
@@ -138,16 +146,24 @@ describe("Container", () => {
       }
     }
     class B {
+      c : C;
+      constructor(c : C) {
+        this.c = c;
+      }
     }
-    const serviceA = autowire<"A", A, A>(A, "A", ["B"]);
+    class C {}
+    const serviceA = autowire<'A', A, A>(A, 'A', ['B']);
+    const serviceB = autowire<'B', B, B>(B, 'B', ['C']);
+    const services = {...serviceA, ...serviceB };
 
-    const container = new Container(serviceA, {} as SingletonInstancesDictionary<typeof serviceA>);
+    const container = new Container(services, {} as SingletonInstancesDictionary<typeof services>);
 
     const serviceANode = new DependencyGraphNode('A', false);
     const serviceBNode = new DependencyGraphNode('B', false, serviceANode);
+    const serviceCNode = new DependencyGraphNode('C', false, serviceBNode);
 
     expect(() => container.services.A).toThrowError(
-      ErrorMessages.MISSING_DEPENDENCY_ERROR_WITH_DEPENDENCY_GRAPH(serviceBNode));
+      ErrorMessages.MISSING_DEPENDENCY_ERROR_WITH_DEPENDENCY_GRAPH(serviceCNode));
   });
 
   test("It throws an error if a circular dependency exists and all classes are transient in scope.", () => {
@@ -183,5 +199,132 @@ describe("Container", () => {
     expect(() => container.services.A).toThrowError(
       ErrorMessages.CIRCULAR_DEPENDENCY_ERROR('A')
     );
+  });
+
+  test("It throws an error if a circular dependency exists and one class is registered transient in scope.", () => {
+    class A {
+      b: B;
+      constructor(b: B) {
+        this.b = b;
+      }
+    }
+    class B {
+      c: C;
+      constructor(c: C) {
+        this.c = c;
+      }
+    }
+    class C {
+      a: A;
+      constructor(a: A) {
+        this.a = a;
+      }
+    }
+    const serviceA = autowire<"A", A, A>(A, "A", ["C"]);
+    const serviceB = autowire<"B", B, B>(B, "B", ["A"]);
+    const serviceC = autowire<"C", C, C>(C, "C", ["B"]);
+
+    const servicesDictionary = mergeDictionaries(
+      mergeDictionaries(serviceA, serviceB),
+      serviceC,
+    );
+    const singletonInstancesDictionary = {
+      A : undefined,
+      B : undefined
+    } as SingletonInstancesDictionary<typeof servicesDictionary>
+
+    const container = new Container(servicesDictionary, singletonInstancesDictionary);
+
+    expect(() => container.services.A).toThrowError(
+      ErrorMessages.CIRCULAR_DEPENDENCY_ERROR('A')
+    );
+  });
+
+  test("It correctly resolves circular dependencies when all classes are registered in singleton scope.", () => {
+    class A {
+      b: B;
+      constructor(b: B) {
+        this.b = b;
+      }
+    }
+    class B {
+      c: C;
+      constructor(c: C) {
+        this.c = c;
+      }
+    }
+    class C {
+      a: A;
+      constructor(a: A) {
+        this.a = a;
+      }
+    }
+    const serviceA = autowire<"A", A, A>(A, "A", ["B"]);
+    const serviceB = autowire<"B", B, B>(B, "B", ["C"]);
+    const serviceC = autowire<"C", C, C>(C, "C", ["A"]);
+
+    const servicesDictionary = mergeDictionaries(
+      mergeDictionaries(serviceA, serviceB),
+      serviceC,
+    );
+    const singletonInstancesDictionary = {
+      A : undefined,
+      B : undefined,
+      C : undefined
+    } as SingletonInstancesDictionary<typeof servicesDictionary>
+
+    const container = new Container(servicesDictionary, singletonInstancesDictionary);
+
+    expect(container.services.A).toBeInstanceOf(A);
+    expect(container.services.B).toBeInstanceOf(B);
+    expect(container.services.C).toBeInstanceOf(C);
+    expect(container.services.A.b).toBeInstanceOf(B);
+    expect(container.services.B.c).toBeInstanceOf(C);
+    expect(container.services.C.a).toBeInstanceOf(A);
+    expect(container.services.A.b.c).toBeInstanceOf(C);
+    expect(container.services.B.c.a).toBeInstanceOf(A);
+    expect(container.services.C.a.b).toBeInstanceOf(B);
+    expect(container.services.A.b.c.a.b.c.a).toBeInstanceOf(A);
+  });
+
+  test('An error is thrown when a circular dependency is registered which includes an attempt to access properties of a dependency inside a constructor.', () => {
+    class A {
+      name = 'A'
+      b: B;
+      constructor(b: B) {
+        this.b = b;
+      }
+    }
+    class B {
+      c: C;
+      constructor(c: C) {
+        this.c = c;
+      }
+    }
+    class C {
+      a: A;
+      dependencyName : string;
+      constructor(a: A) {
+        this.a = a;
+        this.dependencyName = a.name;
+      }
+    }
+    const serviceA = autowire<"A", A, A>(A, "A", ["B"]);
+    const serviceB = autowire<"B", B, B>(B, "B", ["C"]);
+    const serviceC = autowire<"C", C, C>(C, "C", ["A"]);
+
+    const servicesDictionary = mergeDictionaries(
+      mergeDictionaries(serviceA, serviceB),
+      serviceC,
+    );
+    const singletonInstancesDictionary = {
+      A : undefined,
+      B : undefined,
+      C : undefined
+    } as SingletonInstancesDictionary<typeof servicesDictionary>
+
+    const container = new Container(servicesDictionary, singletonInstancesDictionary);
+
+    expect(() => container.services.A).toThrowError(ErrorMessages.UNINITIALIZED_PROPERTY_ACCESS_ERROR);
   });
 });
