@@ -168,26 +168,26 @@ describe("Container", () => {
 
   test("It throws an error if a circular dependency exists and all classes are transient in scope.", () => {
     class A {
-      c: C;
-      constructor(c: C) {
-        this.c = c;
-      }
-    }
-    class B {
-      a: A;
-      constructor(a: A) {
-        this.a = a;
-      }
-    }
-    class C {
       b: B;
       constructor(b: B) {
         this.b = b;
       }
     }
-    const serviceA = autowire<"A", A, A>(A, "A", ["C"]);
-    const serviceB = autowire<"B", B, B>(B, "B", ["A"]);
-    const serviceC = autowire<"C", C, C>(C, "C", ["B"]);
+    class B {
+      c: C;
+      constructor(c: C) {
+        this.c = c;
+      }
+    }
+    class C {
+      a: A;
+      constructor(a: A) {
+        this.a = a;
+      }
+    }
+    const serviceA = autowire<"A", A, A>(A, "A", ["B"]);
+    const serviceB = autowire<"B", B, B>(B, "B", ["C"]);
+    const serviceC = autowire<"C", C, C>(C, "C", ["A"]);
 
     const servicesDictionary = mergeDictionaries(
       mergeDictionaries(serviceA, serviceB),
@@ -220,9 +220,9 @@ describe("Container", () => {
         this.a = a;
       }
     }
-    const serviceA = autowire<"A", A, A>(A, "A", ["C"]);
-    const serviceB = autowire<"B", B, B>(B, "B", ["A"]);
-    const serviceC = autowire<"C", C, C>(C, "C", ["B"]);
+    const serviceA = autowire<"A", A, A>(A, "A", ["B"]);
+    const serviceB = autowire<"B", B, B>(B, "B", ["C"]);
+    const serviceC = autowire<"C", C, C>(C, "C", ["A"]);
 
     const servicesDictionary = mergeDictionaries(
       mergeDictionaries(serviceA, serviceB),
@@ -326,5 +326,99 @@ describe("Container", () => {
     const container = new Container(servicesDictionary, singletonInstancesDictionary);
 
     expect(() => container.services.A).toThrowError(ErrorMessages.UNINITIALIZED_PROPERTY_ACCESS_ERROR);
+  });
+
+  test("It correctly resolves circular dependencies a class registered as a singleton depends upon itself.", () => {
+    class A {
+      b: B;
+      constructor(b: B) {
+        this.b = b;
+      }
+    }
+    class B {
+      c: C;
+      constructor(c: C) {
+        this.c = c;
+      }
+    }
+    class C {
+      a: A;
+      d: D;
+      constructor(a: A, d: D) {
+        this.a = a;
+        this.d = d;
+      }
+    }
+    class D {
+      e: E;
+      constructor(e: E) {
+        this.e = e;
+      }
+    }
+    class E {
+      f: F;
+      constructor(f: F) {
+        this.f = f;
+      }
+    }
+    class F {
+      c : C;
+      constructor(c : C) {
+        this.c = c;
+      }
+    }
+    const serviceA = autowire<"A", A, A>(A, "A", ["B"]);
+    const serviceB = autowire<"B", B, B>(B, "B", ["C"]);
+    const serviceC = autowire<"C", C, C>(C, "C", ["A", 'D']);
+    const serviceD = autowire<'D', D, D>(D, 'D', ['E']);
+    const serviceE = autowire<'E', E, E>(E, 'E', ['F']);
+    const serviceF = autowire<'F', F, F>(F, 'F', ['C']);
+
+    const servicesDictionary = {
+      ...serviceA,
+      ...serviceB,
+      ...serviceC,
+      ...serviceD,
+      ...serviceE,
+      ...serviceF
+    }
+    const singletonInstancesDictionary = {
+      A : undefined,
+      B : undefined,
+      C : undefined,
+      D : undefined,
+      E : undefined,
+      F : undefined
+    } as SingletonInstancesDictionary<typeof servicesDictionary>
+
+    const container = new Container(servicesDictionary, singletonInstancesDictionary);
+
+    expect(container.services.A).toBeInstanceOf(A);
+    expect(container.services.B).toBeInstanceOf(B);
+    expect(container.services.C).toBeInstanceOf(C);
+    expect(container.services.D).toBeInstanceOf(D);
+    expect(container.services.E).toBeInstanceOf(E);
+    expect(container.services.F).toBeInstanceOf(F);
+    expect(container.services.D.e.f.c.a.b.c.d).toBeInstanceOf(D);
+  });
+
+  test("It correctly resolves circular dependencies when one singleton depends upon itself.", () => {
+    class A {
+      a: A;
+      constructor(a: A) {
+        this.a = a;
+      }
+    }
+    const serviceA = autowire<"A", A, A>(A, "A", ["A"]);
+
+    const servicesDictionary = serviceA;
+    const singletonInstancesDictionary = {
+      A : undefined
+    } as SingletonInstancesDictionary<typeof servicesDictionary>
+
+    const container = new Container(servicesDictionary, singletonInstancesDictionary);
+
+    expect(container.services.A).toBeInstanceOf(A);
+    expect(container.services.A.a).toBeInstanceOf(A);
   });
 });

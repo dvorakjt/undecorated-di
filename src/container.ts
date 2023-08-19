@@ -1,6 +1,6 @@
 import { CircularDependencyError } from "./circular-dependency-error";
 import { MissingDependencyError } from "./missing-dependency-error";
-import type { Instantiable } from "./get-instance.interface";
+import type { Instantiable } from "./instantiable.interface";
 import { DependencyGraphNode } from "./dependency-graph-node";
 import { SingletonPlaceholder } from "./singleton-placeholder";
 import { DependencyArrayBearer } from "./dependency-array-bearer.interface";

@@ -1,6 +1,6 @@
 import { Container, Instance, SingletonInstancesDictionary } from "./container";
 import { mergeDictionaries } from "./merge-dictionaries";
-import type { Instantiable } from "./get-instance.interface";
+import type { Instantiable } from "./instantiable.interface";
 
 /**
  * Used to build a dependency injection container. In service class files, call autowire() on the class, and export the returned value as default.
