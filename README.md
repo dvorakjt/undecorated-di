@@ -173,19 +173,13 @@ Dependencies are resolved when an instance is retrieved from the services proper
 
 ## Circular Dependencies
 
-### Resolvable Circular Dependencies Can Only Include Singletons
-
 As of version 1.1.0, circular dependencies CAN be resolved in very specific cases. First, all members of the cycle must be registered as singletons. One singleton will be replaced by a proxy, which will be "filled in" with an actual instance of that singleton once it is instantiated.
 
 Each time a transient service is retrieved, the expected behavior is that that instance is unique. Therefore, to avoid the potentially infinite chains that this guarantee of uniqueness could cause, only singletons may be part of a resolvable circular dependency. If any members are registered in transient scope, a CircularDependencyError will be thrown.
 
-### Properties of members of a dependency cycle should not be accessed in each others' constructors
-
 If a property of one member of a cycle is accessed by another member in that member's constructor, an UninitializedPropertyAccessError will be thrown. The idea here is that if the singleton is not fully instantiated, its properties cannot be guaranteed to be in a valid state. Once all of the constructors have been called, all singletons will have been fully instantiated, and their properties can be considered valid and may be accessed without causing errors.
 
-### Be careful!
-
-Be careful, circular dependencies CAN be resolved, but like with recursive functions, they must be handled with care. The dependency below will resolve (if both classes are registered as singletons):
+Though circular dependencies can be resolved, they must be handled with care. For example, the dependency below will resolve if both classes are registered as singletons:
 
 ```
   class A {
@@ -213,11 +207,11 @@ Be careful, circular dependencies CAN be resolved, but like with recursive funct
   }
 ```
 
-However, it will cause stack overflow if 'myValue' is actually accessed on either class. Therefore, if you choose to include a circular dependency, first ask yourself if it is actually necessary. Try to avoid these. If it happens to be an appropriate solution to describe a certain problem (perhaps a problem whose optimal answer involves nesting or recursion), ensure that an INTERNAL cycle like the one above does not exist, or that there is a terminal condition when members of the cycle invoke each other's methods or access each others' properties. Additionally, ensuring that methods are pure can help keep these types of interactions clean. In general, though, it may be best to avoid these types of interactions/relationships altogether.
+However, it will cause stack overflow if 'myValue' is actually accessed on either class. Therefore, if you choose to include a circular dependency, first ask yourself if it is actually necessary. If it happens to be an appropriate solution to describe a certain problem (perhaps a problem whose optimal answer involves nesting or recursion), ensure that an internal cycle like the one above does not exist, or that there is a terminal condition when members of the cycle invoke each other's methods or access each others' properties. Additionally, ensuring that methods are pure can help keep these types of interactions clean.
 
 ### Checking for circular dependencies
 
-When an attempt to resolve a dependency is made, a tree structure is created and traversed from child node to parent node in order to check for circular dependencies. For efficiency, this check is only performed once. In the case of singletons, if they have previously been resolved, they are returned immediately. In the case of transient services, once a dependency has been resolved once, its key is added to a set of previously resolved dependencies. Each time the service is requested, before performing the circular dependency check again, this set will be checked for the key of the service in question. If it exists in the set, the dependency is considered trusted and the tree traversal will not be performed. 
+When an attempt to resolve a dependency is made, a tree structure is created and a branch of the tree is traversed from child node to parent node in order to check for circular dependencies. For efficiency, this check is only performed once. In the case of singletons, if they have previously been resolved, they are returned immediately. In the case of transient services, once a dependency has been resolved, its key is added to a set of previously resolved dependencies. Each time the service is requested, before performing the circular dependency check again, this set will be checked for the key of the service in question. If it exists in the set, the dependency is considered trusted and the tree traversal will not be performed. 
 
 ## tsconfig
 
