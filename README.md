@@ -213,11 +213,11 @@ Be careful, circular dependencies CAN be resolved, but like with recursive funct
   }
 ```
 
-However, it will cause stack overflow if 'myValue' is actually accessed on either class. Therefore, if you choose to include a circular dependency, first ask yourself if it is actually necessary. Try to avoid these. If it happens to be an appropriate solution to describe a certain problem (perhaps a problem whose optimal answer involves nesting or recursion), ensure that an INTERNAL cycle like the one above does not exist, or that there is a terminal condition when members of the cycle invoke each other's methods. Additionally, ensuring that methods are pure can help keep these types of interactions clean. In general, though, it may be best to avoid these types of interactions/relationships altogether.
+However, it will cause stack overflow if 'myValue' is actually accessed on either class. Therefore, if you choose to include a circular dependency, first ask yourself if it is actually necessary. Try to avoid these. If it happens to be an appropriate solution to describe a certain problem (perhaps a problem whose optimal answer involves nesting or recursion), ensure that an INTERNAL cycle like the one above does not exist, or that there is a terminal condition when members of the cycle invoke each other's methods or access each others' properties. Additionally, ensuring that methods are pure can help keep these types of interactions clean. In general, though, it may be best to avoid these types of interactions/relationships altogether.
 
 ### Checking for circular dependencies
 
-When an attempt to resolve a dependency is made, a tree structure is created and traversed from child node to parent node in order to check for circular dependencies. For efficiency, this check is only performed once. In the case of singletons, they are returned immediately. In the case of transient services, once a dependency has been resolved once, its key is added to a set of previously resolved dependencies. Each time the service is requested, before performing the circular dependency check again, this set will be checked for the key of the service in question. If it exists in the set, the dependency is considered trusted and the tree traversal will not be performed. 
+When an attempt to resolve a dependency is made, a tree structure is created and traversed from child node to parent node in order to check for circular dependencies. For efficiency, this check is only performed once. In the case of singletons, if they have previosly been resolved, they are returned immediately. In the case of transient services, once a dependency has been resolved once, its key is added to a set of previously resolved dependencies. Each time the service is requested, before performing the circular dependency check again, this set will be checked for the key of the service in question. If it exists in the set, the dependency is considered trusted and the tree traversal will not be performed. 
 
 ## tsconfig
 
@@ -235,3 +235,27 @@ Several classes in the project have private members. Therefore, you must set the
 ## Example
 
 You can view a simple example project [here](https://github.com/dvorakjt/undecorated-di-sample).
+
+## License
+
+MIT License
+
+Copyright (c) 2023 Joseph Dvorak
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
