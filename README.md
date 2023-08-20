@@ -192,7 +192,7 @@ Be careful, circular dependencies CAN be resolved, but like with recursive funct
     b : B;
 
     get myValue() {
-      return b.myValue;
+      return this.b.myValue;
     }
 
     constructor(b : B) {
@@ -204,7 +204,7 @@ Be careful, circular dependencies CAN be resolved, but like with recursive funct
     a : A;
 
     get myValue() {
-      return a.myValue;
+      return this.a.myValue;
     }
 
     constructor(a : A) {
