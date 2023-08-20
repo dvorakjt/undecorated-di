@@ -217,7 +217,7 @@ However, it will cause stack overflow if 'myValue' is actually accessed on eithe
 
 ### Checking for circular dependencies
 
-When an attempt to resolve a dependency is made, a tree structure is created and traversed from child node to parent node in order to check for circular dependencies. For efficiency, this check is only performed once. In the case of singletons, if they have previosly been resolved, they are returned immediately. In the case of transient services, once a dependency has been resolved once, its key is added to a set of previously resolved dependencies. Each time the service is requested, before performing the circular dependency check again, this set will be checked for the key of the service in question. If it exists in the set, the dependency is considered trusted and the tree traversal will not be performed. 
+When an attempt to resolve a dependency is made, a tree structure is created and traversed from child node to parent node in order to check for circular dependencies. For efficiency, this check is only performed once. In the case of singletons, if they have previously been resolved, they are returned immediately. In the case of transient services, once a dependency has been resolved once, its key is added to a set of previously resolved dependencies. Each time the service is requested, before performing the circular dependency check again, this set will be checked for the key of the service in question. If it exists in the set, the dependency is considered trusted and the tree traversal will not be performed. 
 
 ## tsconfig
 
