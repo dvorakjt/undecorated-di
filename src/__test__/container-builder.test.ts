@@ -50,8 +50,7 @@ describe("ContainerBuilder", () => {
   });
 
   test("It returns a new Container when build() is called.", () => {
-    expect(ContainerBuilder.createContainerBuilder().build()).toBeInstanceOf(
-      Container,
-    );
+    const container = ContainerBuilder.createContainerBuilder().build();
+    expect(container).toBeInstanceOf(Container);
   });
 });

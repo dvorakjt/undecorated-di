@@ -15,8 +15,7 @@ export default defineConfig({
         "**/*.config.ts",
         "**/*.interface.ts",
         "**/*.type.ts",
-      ],
-      reporter: [["json", { file: "coverage-summary.json" }]],
+      ]
     },
   },
 });
