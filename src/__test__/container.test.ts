@@ -4,7 +4,6 @@ import { autowire } from "../autowire";
 import { mergeDictionaries } from "../merge-dictionaries";
 import { ErrorMessages } from "../error-messages";
 import { DependencyGraphNode } from "../dependency-graph-node";
-import { UninitializedPropertyAccessError } from "../uninitialized-property-access-error";
 
 describe("Container", () => {
   test("It returns an instance of a class when the corresponding property of services is accessed.", () => {

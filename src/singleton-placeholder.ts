@@ -12,71 +12,72 @@ export class SingletonPlaceholder<SingletonType extends Object> {
         if(!self.instance) {
           throw new UninitializedPropertyAccessError(ErrorMessages.UNINITIALIZED_PROPERTY_ACCESS_ERROR);
         }
-        return self.instance[prop];
+        return Reflect.get(self.instance, prop);
       },
       set(_target, prop, newValue) {
         if(!self.instance) {
           throw new UninitializedPropertyAccessError(ErrorMessages.UNINITIALIZED_PROPERTY_ACCESS_ERROR);
         }
-        return self.instance[prop] = newValue;
+        return Reflect.set(self.instance, prop, newValue);
       },
       getPrototypeOf(_target) {
         if(!self.instance) {
           throw new UninitializedPropertyAccessError(ErrorMessages.UNINITIALIZED_PROPERTY_ACCESS_ERROR);
         }
-        return Object.getPrototypeOf(self.instance);
-      },
-      defineProperty(_target, prop, descriptor) {
-        if(!self.instance) {
-          throw new UninitializedPropertyAccessError(ErrorMessages.UNINITIALIZED_PROPERTY_ACCESS_ERROR);
-        }
-        Object.defineProperty(self.instance, prop, descriptor);
-        return prop in self.instance;
-      },
-      deleteProperty(_target, prop) {
-        if(!self.instance) {
-          throw new UninitializedPropertyAccessError(ErrorMessages.UNINITIALIZED_PROPERTY_ACCESS_ERROR);
-        }
-        return delete self.instance[prop];
-      },
-      getOwnPropertyDescriptor(_target, prop) {
-        if(!self.instance) {
-          throw new UninitializedPropertyAccessError(ErrorMessages.UNINITIALIZED_PROPERTY_ACCESS_ERROR);
-        }
-        return Object.getOwnPropertyDescriptor(self.instance, prop);
-      },
-      has(_target, prop) {
-        if(!self.instance) {
-          throw new UninitializedPropertyAccessError(ErrorMessages.UNINITIALIZED_PROPERTY_ACCESS_ERROR);
-        }
-        return prop in self.instance;
-      },
-      isExtensible(_target) {
-        if(!self.instance) {
-          throw new UninitializedPropertyAccessError(ErrorMessages.UNINITIALIZED_PROPERTY_ACCESS_ERROR);
-        }
-        return Object.isExtensible(self.instance);
-      },
-      ownKeys(_target) {
-        if(!self.instance) {
-          throw new UninitializedPropertyAccessError(ErrorMessages.UNINITIALIZED_PROPERTY_ACCESS_ERROR);
-        }
-        return Object.keys(self.instance);
-      },
-      preventExtensions(_target) {
-        if(!self.instance) {
-          throw new UninitializedPropertyAccessError(ErrorMessages.UNINITIALIZED_PROPERTY_ACCESS_ERROR);
-        }
-        Object.preventExtensions(self.instance);
-        return true;
+        return Reflect.getPrototypeOf(self.instance);
       },
       setPrototypeOf(_target, proto) {
         if(!self.instance) {
           throw new UninitializedPropertyAccessError(ErrorMessages.UNINITIALIZED_PROPERTY_ACCESS_ERROR);
         }
-        Object.setPrototypeOf(self.instance, proto);
-        return true;
-      }
+        return Reflect.setPrototypeOf(self.instance, proto);
+      },
+      defineProperty(_target, prop, descriptor) {
+        if(!self.instance) {
+          throw new UninitializedPropertyAccessError(ErrorMessages.UNINITIALIZED_PROPERTY_ACCESS_ERROR);
+        }
+        return Reflect.defineProperty(self.instance, prop, descriptor);
+      },
+      deleteProperty(_target, prop) {
+        if(!self.instance) {
+          throw new UninitializedPropertyAccessError(ErrorMessages.UNINITIALIZED_PROPERTY_ACCESS_ERROR);
+        }
+        return Reflect.deleteProperty(self.instance, prop);
+      },
+      getOwnPropertyDescriptor(_target, prop) {
+        if(!self.instance) {
+          throw new UninitializedPropertyAccessError(ErrorMessages.UNINITIALIZED_PROPERTY_ACCESS_ERROR);
+        }
+        return Reflect.getOwnPropertyDescriptor(self.instance, prop);
+      },
+      has(_target, prop) {
+        if(!self.instance) {
+          throw new UninitializedPropertyAccessError(ErrorMessages.UNINITIALIZED_PROPERTY_ACCESS_ERROR);
+        }
+        return Reflect.has(self.instance, prop);
+      },
+      ownKeys(_target) {
+        if(!self.instance) {
+          throw new UninitializedPropertyAccessError(ErrorMessages.UNINITIALIZED_PROPERTY_ACCESS_ERROR);
+        }
+        return Reflect.ownKeys(self.instance);
+      },
+      isExtensible(target) {
+        if(!self.instance) {
+          throw new UninitializedPropertyAccessError(ErrorMessages.UNINITIALIZED_PROPERTY_ACCESS_ERROR);
+        }
+        if(!Reflect.isExtensible(self.instance)) {
+          Reflect.preventExtensions(target);
+        }
+        return Reflect.isExtensible(target);
+      },
+      preventExtensions(target) {
+        if(!self.instance) {
+          throw new UninitializedPropertyAccessError(ErrorMessages.UNINITIALIZED_PROPERTY_ACCESS_ERROR);
+        }
+        Reflect.preventExtensions(self.instance);
+        return Reflect.preventExtensions(target);
+      },
     });
   }
 }

@@ -17,5 +17,6 @@ export const ErrorMessages = {
   MISSING_DEPENDENCY_ERROR_WITH_DEPENDENCY_GRAPH : <K>(node : DependencyGraphNode<K>) => {
     return `Service with key ${node.serviceKey} not found. Dependency graph is ${buildDependencyGraph(node)}.`
   },
-  UNINITIALIZED_PROPERTY_ACCESS_ERROR : 'Property of singleton accessed before it was instantiated. This is likely due to a reference to the property in the constructor of another class within a singleton dependency cycle.'
+  UNINITIALIZED_PROPERTY_ACCESS_ERROR : 'Property of singleton accessed before it was instantiated. This is likely due to a reference to the property in the constructor of another class within a singleton dependency cycle.',
+  INVALID_SINGLETON_EXTENSIBILITY_ERROR : 'Singleton classes that are members of a circular dependency cycle must be extensible so that their extensibility matches that of the proxy used to instantiate them.'
 }
