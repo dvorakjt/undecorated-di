@@ -53,4 +53,8 @@ describe("ContainerBuilder", () => {
     const container = ContainerBuilder.createContainerBuilder().build();
     expect(container).toBeInstanceOf(Container);
   });
+
+  test("An error is thrown if new ContainerBuilder() is called from outside the class.", () => {
+    expect(() => new ContainerBuilder({}, {})).toThrowError("ContainerBuilder is not constructable. Use ContainerBuilder.createContainerBuilder() instead.");
+  });
 });
