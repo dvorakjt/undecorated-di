@@ -20,10 +20,10 @@ type SingletonInstancesDictionary<ServicesDictionary> = {
 }
 
 class Container<ServicesDictionary> {
-  private serviceTemplates: ServicesDictionary;
-  private singletonInstances: SingletonInstancesDictionary<ServicesDictionary>;
-  private singletonPlaceholders = {} as SingletonPlaceholderDictionary<ServicesDictionary>;
-  private resolvedServices = new Set<keyof ServicesDictionary>();
+  #serviceTemplates: ServicesDictionary;
+  #singletonInstances: SingletonInstancesDictionary<ServicesDictionary>;
+  #singletonPlaceholders = {} as SingletonPlaceholderDictionary<ServicesDictionary>;
+  #resolvedServices = new Set<keyof ServicesDictionary>();
 
   services: {
     [K in keyof ServicesDictionary]: Instance<K, ServicesDictionary>
@@ -33,8 +33,8 @@ class Container<ServicesDictionary> {
     serviceTemplates: ServicesDictionary,
     singletonInstances: SingletonInstancesDictionary<ServicesDictionary>,
   ) {
-    this.serviceTemplates = serviceTemplates;
-    this.singletonInstances = singletonInstances;
+    this.#serviceTemplates = serviceTemplates;
+    this.#singletonInstances = singletonInstances;
     const self = this;
     this.services = new Proxy(
       {} as {
@@ -42,39 +42,39 @@ class Container<ServicesDictionary> {
       },
       {
         get(_target, prop) {
-          return self.getService(prop as keyof ServicesDictionary);
+          return self.#getService(prop as keyof ServicesDictionary);
         },
       },
     );
   }
 
-  private getService<K extends keyof ServicesDictionary>(
+  #getService<K extends keyof ServicesDictionary>(
     serviceKey: K,
   ): Instance<K, ServicesDictionary> {
-    return this.getServiceWithDependencyGraph(new DependencyGraphNode<K>(
+    return this.#getServiceWithDependencyGraph(new DependencyGraphNode<K>(
       serviceKey,
-      this.isSingleton(serviceKey)
+      this.#isSingleton(serviceKey)
     ));
   }
 
-  private getServiceWithDependencyGraph<K extends keyof ServicesDictionary>(
+  #getServiceWithDependencyGraph<K extends keyof ServicesDictionary>(
     node : DependencyGraphNode<K>
   ) : Instance<K, ServicesDictionary> {
     if(node.isSingleton) {
-      const singletonInstance = this.singletonInstances[node.serviceKey];
+      const singletonInstance = this.#singletonInstances[node.serviceKey];
       if(singletonInstance) return singletonInstance as Instance<K, ServicesDictionary>;
     }
 
-    if(!this.wasPreviouslyResolved(node.serviceKey) && this.completesSingletonOnlyDependencyCycle(node)) {
-      if(!(node.serviceKey in this.singletonPlaceholders)) {
-        this.singletonPlaceholders[node.serviceKey] = [];
+    if(!this.#wasPreviouslyResolved(node.serviceKey) && this.#completesSingletonOnlyDependencyCycle(node)) {
+      if(!(node.serviceKey in this.#singletonPlaceholders)) {
+        this.#singletonPlaceholders[node.serviceKey] = [];
       }
       const placeholder = new SingletonPlaceholder<Instance<typeof node['serviceKey'], ServicesDictionary>>()
-      this.singletonPlaceholders[node.serviceKey].push(placeholder);
+      this.#singletonPlaceholders[node.serviceKey].push(placeholder);
       return placeholder.proxy;
     }
 
-    const service = this.serviceTemplates[node.serviceKey];
+    const service = this.#serviceTemplates[node.serviceKey];
     if (!service) {
       if(node.parent) {
         throw new MissingDependencyError(
@@ -88,10 +88,10 @@ class Container<ServicesDictionary> {
       (dependency: keyof ServicesDictionary) => {
         const childNode = new DependencyGraphNode(
           dependency,
-          this.isSingleton(dependency),
+          this.#isSingleton(dependency),
           node
         )
-        return this.getServiceWithDependencyGraph(childNode);
+        return this.#getServiceWithDependencyGraph(childNode);
       }
     );
 
@@ -102,30 +102,30 @@ class Container<ServicesDictionary> {
     ).getInstance(resolvedDependencies);
 
     if(node.isSingleton) {
-      this.singletonInstances[node.serviceKey] = instance;
-      if(node.serviceKey in this.singletonPlaceholders) {
-        const placeholders = this.singletonPlaceholders[node.serviceKey] as Array<SingletonPlaceholder<Instance<typeof node['serviceKey'], ServicesDictionary>>>;
+      this.#singletonInstances[node.serviceKey] = instance;
+      if(node.serviceKey in this.#singletonPlaceholders) {
+        const placeholders = this.#singletonPlaceholders[node.serviceKey] as Array<SingletonPlaceholder<Instance<typeof node['serviceKey'], ServicesDictionary>>>;
         placeholders.forEach(placeholder => {
           placeholder.instance = instance
         });
-        delete this.singletonPlaceholders[node.serviceKey];
+        delete this.#singletonPlaceholders[node.serviceKey];
       }
     }
 
-    this.flagAsResolved(node.serviceKey);
+    this.#flagAsResolved(node.serviceKey);
 
     return instance;
   }
 
-  private isSingleton<K extends keyof SingletonInstancesDictionary<ServicesDictionary>>(serviceKey : K) {
-    return serviceKey in this.singletonInstances;
+  #isSingleton<K extends keyof SingletonInstancesDictionary<ServicesDictionary>>(serviceKey : K) {
+    return serviceKey in this.#singletonInstances;
   }
 
-  private wasPreviouslyResolved<K extends keyof ServicesDictionary>(serviceKey : K) {
-    return this.resolvedServices.has(serviceKey);
+  #wasPreviouslyResolved<K extends keyof ServicesDictionary>(serviceKey : K) {
+    return this.#resolvedServices.has(serviceKey);
   }
 
-  private completesSingletonOnlyDependencyCycle<K extends keyof ServicesDictionary>(node : DependencyGraphNode<K>) {
+  #completesSingletonOnlyDependencyCycle<K extends keyof ServicesDictionary>(node : DependencyGraphNode<K>) {
     const { serviceKey } = node;
     let containsOnlySingletons = node.isSingleton;
 
@@ -144,8 +144,8 @@ class Container<ServicesDictionary> {
     return false;
   }
 
-  private flagAsResolved<K extends keyof ServicesDictionary>(serviceKey : K) {
-    this.resolvedServices.add(serviceKey);
+  #flagAsResolved<K extends keyof ServicesDictionary>(serviceKey : K) {
+    this.#resolvedServices.add(serviceKey);
   }
 }
 

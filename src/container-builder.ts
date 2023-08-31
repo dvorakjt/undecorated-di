@@ -10,21 +10,27 @@ export class ContainerBuilder<
   ServicesDictionaryType,
   SingletonInstancesDictionaryType,
 > {
+  static #isInternalConstructing = false;
   /**
    * returns a new ContainerBuilder with empty servicesDictionary and singletonInstancesDictionary. Use this to get a new ContainerBuilder.
    * @returns ContainerBuilder<{}, {}>;
    */
   static createContainerBuilder() {
+    ContainerBuilder.#isInternalConstructing = true;
     return new ContainerBuilder({}, {});
   }
-
+  
   servicesDictionary: ServicesDictionaryType;
   singletonInstancesDictionary: SingletonInstancesDictionaryType;
 
-  private constructor(
+  constructor(
     transientServiceDictionary: ServicesDictionaryType,
     singletonInstancesDictionary: SingletonInstancesDictionaryType,
   ) {
+    if (!ContainerBuilder.#isInternalConstructing) {
+      throw new TypeError("ContainerBuilder is not constructable. Use ContainerBuilder.createContainerBuilder() instead.");
+    }
+    ContainerBuilder.#isInternalConstructing = false;
     this.servicesDictionary = transientServiceDictionary;
     this.singletonInstancesDictionary = singletonInstancesDictionary;
   }
@@ -41,6 +47,7 @@ export class ContainerBuilder<
       this.servicesDictionary,
       additionalServiceDictionary,
     );
+    ContainerBuilder.#isInternalConstructing = true;
     return new ContainerBuilder(
       expandedServicesDictionary,
       this.singletonInstancesDictionary,
@@ -60,11 +67,12 @@ export class ContainerBuilder<
       additionalServiceDictionary,
     );
     const additionalSingletonInstanceDictionary =
-      this.createSingletonInstancesDictionary(additionalServiceDictionary);
+      this.#createSingletonInstancesDictionary(additionalServiceDictionary);
     const expandedSingletonInstancesDictionary = mergeDictionaries(
       this.singletonInstancesDictionary,
       additionalSingletonInstanceDictionary,
     );
+    ContainerBuilder.#isInternalConstructing = true;
     return new ContainerBuilder(
       expandedServicesDictionary,
       expandedSingletonInstancesDictionary,
@@ -82,7 +90,7 @@ export class ContainerBuilder<
     );
   }
 
-  private createSingletonInstancesDictionary<AdditionalServiceDictionary>(
+  #createSingletonInstancesDictionary<AdditionalServiceDictionary>(
     additionalServiceDictionary: AdditionalServiceDictionary,
   ): {
     [K in keyof AdditionalServiceDictionary]: AdditionalServiceDictionary[K] extends Instantiable
