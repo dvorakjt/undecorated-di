@@ -1,7 +1,7 @@
 {
   "name": "undecorated-di",
-  "version": "1.2.2",
-  "description": "Type-safe, straightforward dependency injection for object-oriented programming using E6 classes and TypeScript interfaces/abstract classes/types--without annotations or reflect-metadata.",
+  "version": "2.0.0",
+  "description": "Type-safe, straightforward dependency injection for TypeScript without annotations or reflect-metadata.",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
   "type": "module",
@@ -10,7 +10,7 @@
     "format": "prettier --write \"**/*.+(js|ts|json)\"",
     "build": "tsup"
   },
-  "files" : [
+  "files": [
     "/dist",
     "check-for-tests.js"
   ],
@@ -29,19 +29,20 @@
   ],
   "author": "Joseph Dvorak",
   "homepage": "https://github.com/dvorakjt/undecorated-di#readme",
-  "bugs" : "https://github.com/dvorakjt/undecorated-di/issues",
+  "bugs": "https://github.com/dvorakjt/undecorated-di/issues",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/dvorakjt/undecorated-di.git"
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "^0.34.1",
-    "prettier": "^3.0.0",
+    "@vitest/coverage-v8": "^1.6.0",
+    "prettier": "^3.3.2",
     "tsup": "^7.2.0",
-    "typedoc": "^0.24.8",
-    "typedoc-plugin-markdown": "^3.15.4",
-    "typescript": "^5.1.6",
-    "vitest": "^0.34.1"
-  }
+    "typescript": "^5.5.3",
+    "vitest": "^1.6.0"
+  },
+  "sideEffects": [
+    "dist/index.js"
+  ]
 }
