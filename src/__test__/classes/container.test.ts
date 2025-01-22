@@ -1,4 +1,4 @@
-import { describe, test, expect, Test } from "vitest";
+import { describe, test, expect } from "vitest";
 import {
   Container,
   ContainerBuilder,
@@ -396,7 +396,7 @@ describe("Container", () => {
     }
 
     class ItemWithCount {
-      count: 42;
+      count = 42;
       name: string;
 
       constructor(itemWithName: ItemWithName) {
