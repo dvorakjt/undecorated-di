@@ -1,6 +1,6 @@
 {
   "name": "undecorated-di",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "Type-safe, straightforward dependency injection for TypeScript without annotations or reflect-metadata.",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
